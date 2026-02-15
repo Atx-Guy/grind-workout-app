@@ -764,6 +764,153 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
+        /* ── Login Screen ── */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+        }
+        .login-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+        }
+        .login-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+            letter-spacing: 4px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .login-subtitle {
+            font-size: 16px;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+        .login-form {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .login-input {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .login-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .login-input::placeholder {
+            color: var(--text-muted);
+        }
+        .login-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .login-btn:hover {
+            background: #ff3333;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+        .login-btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .login-toggle {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .login-toggle a {
+            color: var(--accent);
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .login-toggle a:hover {
+            text-decoration: underline;
+        }
+        .login-error {
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-profile:hover {
+            border-color: var(--accent);
+        }
+        .user-email {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
         /* ── Mobile ── */
         @media (max-width: 480px) {
             .app-shell { padding: 12px 12px 100px; }
@@ -780,11 +927,37 @@
     <!-- Header -->
     <div class="header">
         <div class="logo">GRIND <span>home gym</span></div>
+        <div id="userProfile" style="display: none;"></div>
         <button class="header-back" id="backBtn" onclick="goHome()">← Back</button>
     </div>
 
+    <!-- ════════ LOGIN SCREEN ════════ -->
+    <div class="screen active" id="screenLogin">
+        <div class="login-screen">
+            <div class="login-icon">💪</div>
+            <div class="login-title">GRIND</div>
+            <div class="login-subtitle">Sign in to sync your workouts and equipment across devices</div>
+            
+            <div class="login-form">
+                <input type="email" id="loginEmail" class="login-input" placeholder="Email" />
+                <input type="password" id="loginPassword" class="login-input" placeholder="Password" />
+                <button id="loginBtn" class="login-btn" onclick="handleLogin()">SIGN IN</button>
+                
+                <div class="login-divider">or</div>
+                
+                <button id="signupBtn" class="login-btn" onclick="handleSignup()" style="background: var(--bg-card); color: var(--text); border: 1px solid var(--border);">CREATE ACCOUNT</button>
+                
+                <div id="loginError" class="login-error" style="display: none;"></div>
+                
+                <div class="login-toggle">
+                    <a onclick="skipLogin()">Continue without account →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ════════ SETUP SCREEN ════════ -->
-    <div class="screen active" id="screenSetup">
+    <div class="screen" id="screenSetup">
         <div class="setup-screen">
             <div class="setup-icon">🏋️</div>
             <div class="setup-title">WHAT'S IN YOUR GYM?</div>
@@ -1503,6 +1676,7 @@ function finishSetup() {
     });
     saveEquipment();
     markSetupDone();
+    saveUserEquipment(); // Save to Firestore
     renderEquipBar();
     renderFilters();
     renderWorkoutGrid();
@@ -1513,6 +1687,7 @@ function skipSetup() {
     myEquipment = new Set(EQUIPMENT.map(e => e.id));
     saveEquipment();
     markSetupDone();
+    saveUserEquipment(); // Save to Firestore
     renderEquipBar();
     renderFilters();
     renderWorkoutGrid();
@@ -1795,6 +1970,10 @@ function completeWorkout() {
     document.getElementById('completeStat').innerHTML =
         `<strong>${selectedWorkout.title}</strong> completed in <strong>${mins} min</strong>`;
     speak('Workout complete. Great job!');
+    
+    // Save workout history to database
+    saveWorkoutHistory(selectedWorkout.id, elapsed, new Date());
+    
     showScreen('screenComplete');
 }
 
@@ -1998,6 +2177,255 @@ Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this
 }
 
 // ══════════════════════════════════════
+//  FIREBASE CONFIGURATION & AUTH
+// ══════════════════════════════════════
+
+// Firebase configuration (using public demo config - replace with your own)
+const firebaseConfig = {
+    apiKey: "AIzaSyDemoKey123456789",
+    authDomain: "grind-workout-app.firebaseapp.com",
+    projectId: "grind-workout-app",
+    storageBucket: "grind-workout-app.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abc123"
+};
+
+let auth = null;
+let db = null;
+let currentUser = null;
+
+// Initialize Firebase (will be loaded from CDN)
+function initFirebase() {
+    try {
+        if (typeof firebase !== 'undefined') {
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            
+            // Listen for auth state changes
+            auth.onAuthStateChanged(user => {
+                currentUser = user;
+                if (user) {
+                    onUserLoggedIn(user);
+                } else {
+                    onUserLoggedOut();
+                }
+            });
+        } else {
+            console.warn('Firebase SDK not loaded, running in offline mode');
+            // Show login screen in offline mode
+            showScreen('screenLogin');
+        }
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+        showScreen('screenLogin');
+    }
+}
+
+// Handle user login
+async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginError');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    if (!email || !password) {
+        showLoginError('Please enter email and password');
+        return;
+    }
+    
+    loginBtn.disabled = true;
+    errorDiv.style.display = 'none';
+    
+    try {
+        if (auth) {
+            await auth.signInWithEmailAndPassword(email, password);
+            // onAuthStateChanged will handle the rest
+        } else {
+            showLoginError('Authentication not available');
+            loginBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        let message = 'Login failed. Please try again.';
+        if (error.code === 'auth/user-not-found') {
+            message = 'No account found with this email.';
+        } else if (error.code === 'auth/wrong-password') {
+            message = 'Incorrect password.';
+        } else if (error.code === 'auth/invalid-email') {
+            message = 'Invalid email address.';
+        }
+        showLoginError(message);
+        loginBtn.disabled = false;
+    }
+}
+
+// Handle user signup
+async function handleSignup() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginError');
+    const signupBtn = document.getElementById('signupBtn');
+    
+    if (!email || !password) {
+        showLoginError('Please enter email and password');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showLoginError('Password must be at least 6 characters');
+        return;
+    }
+    
+    signupBtn.disabled = true;
+    errorDiv.style.display = 'none';
+    
+    try {
+        if (auth) {
+            await auth.createUserWithEmailAndPassword(email, password);
+            // onAuthStateChanged will handle the rest
+        } else {
+            showLoginError('Authentication not available');
+            signupBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Signup error:', error);
+        let message = 'Signup failed. Please try again.';
+        if (error.code === 'auth/email-already-in-use') {
+            message = 'Email already in use. Try logging in instead.';
+        } else if (error.code === 'auth/invalid-email') {
+            message = 'Invalid email address.';
+        } else if (error.code === 'auth/weak-password') {
+            message = 'Password is too weak. Use at least 6 characters.';
+        }
+        showLoginError(message);
+        signupBtn.disabled = false;
+    }
+}
+
+// Show login error
+function showLoginError(message) {
+    const errorDiv = document.getElementById('loginError');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+// Skip login (continue without account)
+function skipLogin() {
+    if (isSetupDone()) {
+        renderEquipBar();
+        renderFilters();
+        renderWorkoutGrid();
+        showScreen('screenBrowse');
+    } else {
+        renderSetup();
+        showScreen('screenSetup');
+    }
+}
+
+// Handle user logged in
+async function onUserLoggedIn(user) {
+    console.log('User logged in:', user.email);
+    
+    // Update UI with user profile
+    const userProfile = document.getElementById('userProfile');
+    userProfile.innerHTML = `
+        <div class="user-profile">
+            <span class="user-email">${user.email}</span>
+            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
+    `;
+    userProfile.style.display = 'block';
+    
+    // Load user data from Firestore
+    if (db) {
+        try {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                // Load equipment from database
+                if (userData.equipment) {
+                    myEquipment = new Set(userData.equipment);
+                    saveEquipment(); // Save to localStorage as backup
+                }
+                // Check if setup is done
+                if (userData.setupDone) {
+                    markSetupDone();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    }
+    
+    // Navigate to appropriate screen
+    if (isSetupDone()) {
+        renderEquipBar();
+        renderFilters();
+        renderWorkoutGrid();
+        showScreen('screenBrowse');
+    } else {
+        renderSetup();
+        showScreen('screenSetup');
+    }
+}
+
+// Handle user logged out
+function onUserLoggedOut() {
+    console.log('User logged out');
+    
+    // Update UI
+    const userProfile = document.getElementById('userProfile');
+    userProfile.style.display = 'none';
+    userProfile.innerHTML = '';
+    
+    // Show login screen
+    showScreen('screenLogin');
+}
+
+// Handle logout
+async function handleLogout() {
+    try {
+        if (auth) {
+            await auth.signOut();
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+}
+
+// Save user equipment to Firestore
+async function saveUserEquipment() {
+    if (currentUser && db) {
+        try {
+            await db.collection('users').doc(currentUser.uid).set({
+                equipment: [...myEquipment],
+                setupDone: isSetupDone(),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error saving equipment:', error);
+        }
+    }
+}
+
+// Save workout history to Firestore
+async function saveWorkoutHistory(workoutId, duration, completedAt) {
+    if (currentUser && db) {
+        try {
+            await db.collection('users').doc(currentUser.uid).collection('history').add({
+                workoutId: workoutId,
+                duration: duration,
+                completedAt: completedAt || firebase.firestore.FieldValue.serverTimestamp(),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (error) {
+            console.error('Error saving workout history:', error);
+        }
+    }
+}
+
+// ══════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════
 loadEquipment();
@@ -2010,17 +2438,22 @@ document.getElementById('genInput').addEventListener('keydown', (e) => {
     }
 });
 
-if (isSetupDone()) {
-    // Skip setup, go straight to browse
-    renderEquipBar();
-    renderFilters();
-    renderWorkoutGrid();
-    showScreen('screenBrowse');
-} else {
-    // Show setup screen
-    renderSetup();
-}
+// Enter key for login form
+document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        handleLogin();
+    }
+});
+
+// Initialize Firebase on page load (auth state will handle navigation)
+initFirebase();
 </script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 </body>
 </html>
