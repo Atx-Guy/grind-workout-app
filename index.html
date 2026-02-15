@@ -2220,12 +2220,13 @@ function initFirebase() {
             });
         } else {
             console.warn('Firebase SDK not loaded, running in offline mode');
-            // Show login screen in offline mode
-            showScreen('screenLogin');
+            // Skip login and go directly to app in offline mode
+            skipLogin();
         }
     } catch (error) {
         console.error('Firebase initialization error:', error);
-        showScreen('screenLogin');
+        // Skip login on error and go directly to app
+        skipLogin();
     }
 }
 
@@ -2425,8 +2426,10 @@ async function saveWorkoutHistory(workoutId, duration, completedAt) {
                 duration: duration,
                 completedAt: completedAt ? firebase.firestore.Timestamp.fromDate(completedAt) : firebase.firestore.FieldValue.serverTimestamp()
             });
+            console.log('Workout history saved to cloud');
         } catch (error) {
             console.error('Error saving workout history:', error);
+            // User's workout is still tracked locally, just not synced to cloud
         }
     }
 }
