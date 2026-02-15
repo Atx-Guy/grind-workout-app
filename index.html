@@ -1065,6 +1065,11 @@
 
 <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle voice cues">🔊</button>
 
+<!-- Firebase SDK - Load before main app script -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
 // ══════════════════════════════════════
 //  EXERCISE DATABASE
@@ -2180,7 +2185,9 @@ Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this
 //  FIREBASE CONFIGURATION & AUTH
 // ══════════════════════════════════════
 
-// Firebase configuration (using public demo config - replace with your own)
+// Firebase configuration
+// NOTE: Replace these placeholder values with your actual Firebase project credentials
+// Get your config from: Firebase Console > Project Settings > General > Your apps
 const firebaseConfig = {
     apiKey: "AIzaSyDemoKey123456789",
     authDomain: "grind-workout-app.firebaseapp.com",
@@ -2416,8 +2423,7 @@ async function saveWorkoutHistory(workoutId, duration, completedAt) {
             await db.collection('users').doc(currentUser.uid).collection('history').add({
                 workoutId: workoutId,
                 duration: duration,
-                completedAt: completedAt || firebase.firestore.FieldValue.serverTimestamp(),
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                completedAt: completedAt ? firebase.firestore.Timestamp.fromDate(completedAt) : firebase.firestore.FieldValue.serverTimestamp()
             });
         } catch (error) {
             console.error('Error saving workout history:', error);
@@ -2446,14 +2452,9 @@ document.getElementById('loginPassword').addEventListener('keydown', (e) => {
     }
 });
 
-// Initialize Firebase on page load (auth state will handle navigation)
+// Initialize Firebase after DOM is ready (Firebase SDK is already loaded)
 initFirebase();
 </script>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 </body>
 </html>
