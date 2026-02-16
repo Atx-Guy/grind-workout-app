@@ -14,7 +14,7 @@ To complete the Firebase hosting setup, follow these steps:
 
 1. Go to the [Firebase Console](https://console.firebase.google.com/)
 2. Click "Add project"
-3. Enter the project name: `grind` (or update `.firebaserc` with your chosen project ID)
+3. Enter the project name: `grindapp-auth` (or update `.firebaserc` with your chosen project ID)
 4. Follow the setup wizard to complete project creation
 
 #### 2. Set up Firebase Hosting
