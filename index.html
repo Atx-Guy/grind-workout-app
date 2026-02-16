@@ -2291,7 +2291,21 @@ async function handleSignup() {
     
     try {
         if (auth) {
-            await auth.createUserWithEmailAndPassword(email, password);
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            // Create initial user document in Firestore
+            if (db && userCredential.user) {
+                try {
+                    await db.collection('users').doc(userCredential.user.uid).set({
+                        email: userCredential.user.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        setupDone: false,
+                        equipment: []
+                    }, { merge: true });
+                } catch (dbError) {
+                    console.error('Error creating user document:', dbError);
+                    // Continue anyway - onAuthStateChanged will handle the rest
+                }
+            }
             // onAuthStateChanged will handle the rest
         } else {
             showLoginError('Authentication not available');
