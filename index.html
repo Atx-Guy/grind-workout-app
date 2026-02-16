@@ -2067,7 +2067,7 @@ async function generateWorkout() {
         <div class="gen-loading-text">Building your workout with <strong>DeepSeek AI</strong>...</div>
     </div>`;
 
-    const equipList = [...myEquipment].join(', ') || 'Bodyweight';
+    const equipList = [...myEquipment].length > 0 ? [...myEquipment].join(', ') : 'Bodyweight';
 
     const prompt = `You are an Expert HIIT Programmer and Logic Engineer. Generate a high-intensity circuit workout that fits a strict Block-Based structure for the GRIND mobile app.
 
@@ -2098,7 +2098,7 @@ USER'S REQUEST: "${input}"
 
 4. **Block Format:**
    - Each block must specify: sets (typically 3), exercises with work/rest timing
-   - Each exercise needs: name, work duration OR reps
+   - Each exercise needs: name, work duration OR reps (reps can be a number like 15 or string like "12 each")
    - Each rest needs: rest_seconds
 
 Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this exact format:
@@ -2126,7 +2126,7 @@ Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this
         "block_name": "Block 2 — Lower Body",
         "sets": 3,
         "exercises": [
-          { "name": "Squats", "reps": "15" },
+          { "name": "Squats", "reps": 15 },
           { "rest_seconds": 15 },
           { "name": "Lunges", "reps": "12 each" },
           { "rest_seconds": 30 }
@@ -2140,7 +2140,13 @@ Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this
   }
 }
 
-IMPORTANT: Calculate total time to match user request. For a 20min workout with 3 blocks of 3 sets each at 40s work/20s rest for 2 exercises = (40+20+40+30) × 3 = ~400s per block × 3 blocks = ~20 min total.`;
+IMPORTANT: Calculate total time to match user request. For a 20min workout:
+- Example: 2 blocks, 3 sets each, 2 exercises per block at 40s work/20s rest
+- Per block cycle: (40s + 20s + 40s + 30s) = 130s
+- Per block total: 130s × 3 sets = 390s (6.5 min)
+- Two blocks: 390s × 2 = 780s (13 min)
+- Add warmup (2 min) + cooldown (2 min) = 17 min total
+- Adjust sets, exercises, or add a third block to reach target duration`;
 
     try {
         const resp = await fetch(DEEPSEEK_URL, {
