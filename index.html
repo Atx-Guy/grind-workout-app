@@ -50,7 +50,7 @@
             z-index: 1;
             max-width: 520px;
             margin: 0 auto;
-            padding: 20px 16px 100px;
+            padding: 20px 20px 100px 20px;
             min-height: 100vh;
         }
 
@@ -59,16 +59,26 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 0 28px;
+            padding: 0 0 28px;
         }
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 24px;
             font-family: 'Bebas Neue', sans-serif;
             font-size: 36px;
             letter-spacing: 6px;
             color: var(--accent);
             text-shadow: 0 0 30px var(--accent-glow);
+            font-weight: bold;
         }
-        .logo span { color: var(--text-dim); font-size: 14px; letter-spacing: 2px; }
+        .logo span { 
+            color: var(--text-dim); 
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            font-weight: 400;
+            font-family: 'DM Sans', sans-serif;
+        }
         .header-back {
             display: none;
             background: none;
