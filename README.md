@@ -2,7 +2,26 @@
 
 [![Deploy to Firebase Hosting on merge](https://github.com/redwinesuperuser/grind-workout-app/actions/workflows/firebase-hosting-merge.yml/badge.svg)](https://github.com/redwinesuperuser/grind-workout-app/actions/workflows/firebase-hosting-merge.yml)
 
-A powerful home workout application.
+A powerful home workout application with AI-powered workout generation.
+
+## Features
+
+### AI Workout Generator
+GRIND includes an intelligent workout generator powered by DeepSeek AI that creates custom HIIT workouts based on:
+- **Available equipment**: Generates workouts using only the equipment you have
+- **Requested duration**: Creates workouts that match your time constraints (15, 20, 30 minutes, etc.)
+- **Focus areas**: Upper body, lower body, full body, core, or cardio
+- **Intensity levels**: High intensity (40s work/20s rest), Tabata (20s/10s), or Endurance (60s/30s)
+
+The generator follows a strict **Block-Based System**:
+- **Warm-up**: Dynamic movements to prepare your body
+- **Blocks**: 1-3 exercise blocks with logical pairing (push/pull or upper/lower)
+- **Cool-down**: Static stretching for recovery
+
+Example prompts:
+- "20 min HIIT full body with bands"
+- "15 min Tabata core burner, no equipment"
+- "30 min high intensity full body, bodyweight only"
 
 ## 🚀 Live Deployment
 
