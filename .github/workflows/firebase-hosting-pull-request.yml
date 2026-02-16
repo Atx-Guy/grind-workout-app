@@ -17,4 +17,4 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GRIND_WORKOUT_APP }}
-          projectId: grind-workout-app
+          projectId: grind
