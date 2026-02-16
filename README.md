@@ -1,6 +1,15 @@
 # GRIND — Home Workout Engine 🔥
 
+[![Deploy to Firebase Hosting on merge](https://github.com/redwinesuperuser/grind-workout-app/actions/workflows/firebase-hosting-merge.yml/badge.svg)](https://github.com/redwinesuperuser/grind-workout-app/actions/workflows/firebase-hosting-merge.yml)
+
 A powerful home workout application.
+
+## 🚀 Live Deployment
+
+The app is **live** and deployed to Firebase Hosting:
+- **Production URL**: [https://grindapp-auth.web.app/](https://grindapp-auth.web.app/)
+- **Status**: ✅ Deployed and Loading
+- **Last Successful Deploy**: The main branch is automatically deployed on every merge
 
 ## Firebase Hosting Setup
 
