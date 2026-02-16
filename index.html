@@ -2021,16 +2021,16 @@ const DEEPSEEK_KEY = 'sk-d818274e8bbb422886d6ac1290942812';
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
 const GEN_SUGGESTIONS = [
-    '15 min core burner, no equipment',
-    '20 min pull-up bar + bands back day',
-    '30 min full body HIIT, bodyweight only',
-    '10 min quick morning stretch & mobility',
-    '25 min leg day with short & long bands',
-    '20 min push workout with bands, chest focus',
-    '15 min band arms — biceps & triceps',
-    '20 min beginner friendly full body',
-    '15 min jump rope HIIT cardio session',
-    '20 min jump rope + bodyweight circuit',
+    '15 min Tabata core burner, no equipment',
+    '20 min HIIT full body with bands',
+    '30 min high intensity full body, bodyweight only',
+    '15 min upper body push/pull with bands',
+    '25 min lower body with short & long bands',
+    '20 min chest and back with bands',
+    '15 min HIIT arms — biceps & triceps',
+    '20 min beginner friendly full body circuit',
+    '18 min Tabata cardio with jump rope',
+    '20 min endurance full body circuit',
 ];
 
 function openGenerator() {
@@ -2067,39 +2067,80 @@ async function generateWorkout() {
         <div class="gen-loading-text">Building your workout with <strong>DeepSeek AI</strong>...</div>
     </div>`;
 
-    const equipList = [...myEquipment].join(', ');
+    const equipList = [...myEquipment].join(', ') || 'Bodyweight';
 
-    const prompt = `You are a fitness coach AI. Generate a structured workout based on the user's request.
+    const prompt = `You are an Expert HIIT Programmer and Logic Engineer. Generate a high-intensity circuit workout that fits a strict Block-Based structure for the GRIND mobile app.
 
 USER'S AVAILABLE EQUIPMENT: ${equipList}
 USER'S REQUEST: "${input}"
 
-RULES:
-- ONLY use exercises possible with the user's available equipment listed above.
-- Include a warm-up (2-3 min) and cool-down (2-3 min).
-- Each exercise step must have: phase, name, duration (seconds), type ("exercise" or "rest").
-- For exercise steps, include EITHER: set + reps (for strength moves), OR tips (for timed moves like stretches, holds).
-- Rest steps only need phase, name: "Rest", duration, type: "rest".
-- Keep total workout time reasonable for the request.
-- Use realistic durations: 30-50s for exercises, 15-60s for rest.
+# CRITICAL LOGIC & CONSTRAINTS
+
+1. **Time Management Logic:**
+   - Calculate total duration STRICTLY: (Work Time + Rest Time) × Sets
+   - Match user's requested duration exactly (allowing 1-2 min variance for transitions)
+   - **Intensity-based timing:**
+     * High Intensity: 40s Work / 20s Rest
+     * Tabata: 20s Work / 10s Rest
+     * Endurance: 60s Work / 30s Rest
+
+2. **Block Structure Logic:**
+   - **Warm-up (2-3 min):** Dynamic movements ONLY (e.g., Arm Circles, Jumping Jacks, High Knees)
+   - **Blocks (1-3):** Pair exercises logically:
+     * Logic A (Peripheral Heart Action): Pair Upper Body + Lower Body (e.g., Push-ups + Lunges)
+     * Logic B (Agonist/Antagonist): Pair Push + Pull (e.g., Band Rows + Band Press)
+   - **Cool-down (2-3 min):** Static stretching ONLY (e.g., Deep Breathing, Quad Stretch)
+
+3. **Equipment Filtering:**
+   - STRICTLY use ONLY equipment from: ${equipList}
+   - If NO equipment listed, use ONLY "Bodyweight" exercises
+   - Valid equipment: Bodyweight, Long Band, Short Band, Pull-up Bar, Jump Rope
+
+4. **Block Format:**
+   - Each block must specify: sets (typically 3), exercises with work/rest timing
+   - Each exercise needs: name, work duration OR reps
+   - Each rest needs: rest_seconds
 
 Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this exact format:
 {
-  "title": "Short catchy workout name",
-  "category": "Full Body|Upper Body|Lower Body|Core|HIIT|Recovery",
-  "duration": 20,
-  "intensity": "low|medium|high",
-  "equipment": ["Bodyweight"],
-  "muscles": "Chest · Back · etc",
-  "desc": "One sentence description",
-  "steps": [
-    {"phase": "Warm-Up", "name": "Jumping Jacks", "duration": 30, "type": "exercise", "tips": "30 seconds"},
-    {"phase": "Warm-Up", "name": "Arm Circles", "duration": 20, "type": "exercise", "tips": "20 seconds"},
-    {"phase": "Block 1", "name": "Push-Ups", "duration": 40, "type": "exercise", "set": 1, "reps": 15},
-    {"phase": "Block 1", "name": "Rest", "duration": 30, "type": "rest"},
-    {"phase": "Cool-Down", "name": "Deep Breathing", "duration": 30, "type": "exercise", "tips": "30 seconds"}
-  ]
-}`;
+  "workout_title": "Catchy HIIT Workout Name",
+  "total_duration": 20,
+  "intensity_level": "High|Medium|Low",
+  "structure": {
+    "warmup": [
+      { "exercise": "Jumping Jacks", "duration_seconds": 30 },
+      { "exercise": "Arm Circles", "duration_seconds": 30 }
+    ],
+    "blocks": [
+      {
+        "block_name": "Block 1 — Push/Pull",
+        "sets": 3,
+        "exercises": [
+          { "name": "Push-Ups", "duration_seconds": 40 },
+          { "rest_seconds": 20 },
+          { "name": "Band Rows", "duration_seconds": 40 },
+          { "rest_seconds": 30 }
+        ]
+      },
+      {
+        "block_name": "Block 2 — Lower Body",
+        "sets": 3,
+        "exercises": [
+          { "name": "Squats", "reps": "15" },
+          { "rest_seconds": 15 },
+          { "name": "Lunges", "reps": "12 each" },
+          { "rest_seconds": 30 }
+        ]
+      }
+    ],
+    "cooldown": [
+      { "exercise": "Standing Quad Stretch", "duration_seconds": 30 },
+      { "exercise": "Deep Breathing", "duration_seconds": 30 }
+    ]
+  }
+}
+
+IMPORTANT: Calculate total time to match user request. For a 20min workout with 3 blocks of 3 sets each at 40s work/20s rest for 2 exercises = (40+20+40+30) × 3 = ~400s per block × 3 blocks = ~20 min total.`;
 
     try {
         const resp = await fetch(DEEPSEEK_URL, {
@@ -2111,7 +2152,7 @@ Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this
             body: JSON.stringify({
                 model: 'deepseek-chat',
                 messages: [
-                    { role: 'system', content: 'You are a fitness coach AI. You respond ONLY with valid JSON. No markdown, no backticks, no explanation.' },
+                    { role: 'system', content: 'You are an Expert HIIT Programmer and Logic Engineer. You respond ONLY with valid JSON matching the block-based structure. No markdown, no backticks, no explanation.' },
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.7,
@@ -2133,15 +2174,82 @@ Respond with ONLY valid JSON (no markdown, no backticks, no explanation) in this
         let cleaned = rawText.trim();
         cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
         
-        const workout = JSON.parse(cleaned);
+        const blockWorkout = JSON.parse(cleaned);
 
-        // Validate minimum structure
-        if (!workout.title || !workout.steps || !Array.isArray(workout.steps) || workout.steps.length < 3) {
-            throw new Error('AI returned an incomplete workout');
+        // Validate block-based structure
+        if (!blockWorkout.workout_title || !blockWorkout.structure || 
+            !blockWorkout.structure.warmup || !blockWorkout.structure.blocks || !blockWorkout.structure.cooldown) {
+            throw new Error('AI returned an incomplete workout structure');
         }
 
-        // Assign an ID and store as the selected workout
-        workout.id = 'ai-' + Date.now();
+        // Convert block-based format to step-based format for existing UI
+        const workout = {
+            id: 'ai-' + Date.now(),
+            title: blockWorkout.workout_title,
+            category: 'HIIT',
+            duration: blockWorkout.total_duration || 20,
+            intensity: (blockWorkout.intensity_level || 'high').toLowerCase(),
+            equipment: [...myEquipment],
+            muscles: 'Full Body · AI Generated',
+            desc: `${blockWorkout.intensity_level || 'High'} intensity ${blockWorkout.total_duration || 20} minute workout`,
+            steps: []
+        };
+
+        // Add warmup
+        blockWorkout.structure.warmup.forEach(item => {
+            workout.steps.push({
+                phase: 'Warm-Up',
+                name: item.exercise,
+                duration: item.duration_seconds,
+                type: 'exercise',
+                tips: `${item.duration_seconds} seconds`
+            });
+        });
+
+        // Add blocks
+        blockWorkout.structure.blocks.forEach((block, blockIdx) => {
+            const blockName = block.block_name || `Block ${blockIdx + 1}`;
+            const sets = block.sets || 3;
+            
+            // Repeat exercises for the specified number of sets
+            for (let setNum = 1; setNum <= sets; setNum++) {
+                block.exercises.forEach(ex => {
+                    if (ex.rest_seconds !== undefined) {
+                        workout.steps.push({
+                            phase: blockName,
+                            name: 'Rest',
+                            duration: ex.rest_seconds,
+                            type: 'rest'
+                        });
+                    } else if (ex.name) {
+                        const step = {
+                            phase: blockName,
+                            name: ex.name,
+                            duration: ex.duration_seconds || 40,
+                            type: 'exercise',
+                            set: setNum
+                        };
+                        if (ex.reps) {
+                            step.reps = ex.reps;
+                        } else if (ex.duration_seconds) {
+                            step.tips = `${ex.duration_seconds} seconds`;
+                        }
+                        workout.steps.push(step);
+                    }
+                });
+            }
+        });
+
+        // Add cooldown
+        blockWorkout.structure.cooldown.forEach(item => {
+            workout.steps.push({
+                phase: 'Cool-Down',
+                name: item.exercise,
+                duration: item.duration_seconds,
+                type: 'exercise',
+                tips: `${item.duration_seconds} seconds`
+            });
+        });
 
         // Show success — render directly into the detail screen
         selectedWorkout = workout;
