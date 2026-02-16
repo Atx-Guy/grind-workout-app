@@ -1769,6 +1769,8 @@ function renderWorkoutGrid() {
         return;
     }
 
+    // Render simplified workout cards - streamlined to show only essential info
+    // Note: desc, muscles, and equipment are retained in workout data for detail screen and future use
     grid.innerHTML = filtered.map(w => {
         const intensityClass = w.intensity === 'high' ? 'badge-intensity-high' : w.intensity === 'medium' ? 'badge-intensity-med' : 'badge-intensity-low';
         return `
