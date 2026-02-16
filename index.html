@@ -2300,7 +2300,7 @@ async function handleSignup() {
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         setupDone: false,
                         equipment: []
-                    });
+                    }, { merge: true });
                 } catch (dbError) {
                     console.error('Error creating user document:', dbError);
                     // Continue anyway - onAuthStateChanged will handle the rest
