@@ -5,7 +5,9 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "README.md"
+      "README.md",
+      ".firebaserc",
+      ".github/**"
     ],
     "rewrites": [
       {
