@@ -2826,11 +2826,13 @@ async function loadWorkoutHistory() {
         
         // Check for missing index error
         if (error.code === 'failed-precondition') {
+            const urlMatch = error.message.match(/https:\/\/[^\s]+/);
+            const indexUrl = urlMatch ? urlMatch[0] : '#';
             historyList.innerHTML = `
                 <div class="history-empty">
                     <p>Database index required.</p>
                     <p style="font-size: 12px; margin-top: 8px;">
-                        Click <a href="${error.message.match(/https:\/\/[^\s]+/)}" target="_blank" style="color: var(--accent);">here</a> to create the required index, 
+                        Click <a href="${indexUrl}" target="_blank" style="color: var(--accent);">here</a> to create the required index,
                         then refresh this page.
                     </p>
                 </div>
