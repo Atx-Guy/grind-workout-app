@@ -929,6 +929,86 @@
             color: var(--accent);
         }
 
+        .history-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            transition: all 0.2s;
+            margin-right: 8px;
+        }
+        .history-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── History Screen ── */
+        .history-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .history-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .history-subtitle {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        .history-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .history-loading {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 40px;
+        }
+        .history-empty {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 40px;
+        }
+        .history-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .history-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .history-item-info {
+            flex: 1;
+        }
+        .history-item-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .history-item-meta {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        .history-item-duration {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
         /* ── Mobile ── */
         @media (max-width: 480px) {
             .app-shell { padding: 12px 12px 100px; }
@@ -1077,6 +1157,17 @@
             <div class="complete-title">WORKOUT COMPLETE</div>
             <div class="complete-stat" id="completeStat"></div>
             <button class="btn-start-workout" style="margin-top:20px;max-width:300px" onclick="goHome()">BACK TO WORKOUTS</button>
+        </div>
+    </div>
+
+    <!-- ════════ HISTORY SCREEN ════════ -->
+    <div class="screen" id="screenHistory">
+        <div class="history-header">
+            <div class="history-title">WORKOUT HISTORY</div>
+            <div class="history-subtitle">Your completed workouts</div>
+        </div>
+        <div class="history-list" id="historyList">
+            <div class="history-loading">Loading history...</div>
         </div>
     </div>
 </div>
@@ -2485,6 +2576,7 @@ async function onUserLoggedIn(user) {
     userProfile.innerHTML = `
         <div class="user-profile">
             <span class="user-email">${user.email}</span>
+            <button class="history-btn" onclick="openHistory()">History</button>
             <button class="logout-btn" onclick="handleLogout()">Logout</button>
         </div>
     `;
@@ -2576,6 +2668,78 @@ async function saveWorkoutHistory(workoutId, duration, completedAt) {
             console.error('Error saving workout history:', error);
             // User's workout is still tracked locally, just not synced to cloud
         }
+    }
+}
+
+// Open workout history screen
+async function openHistory() {
+    showScreen('screenHistory');
+    await loadWorkoutHistory();
+}
+
+// Load and display workout history
+async function loadWorkoutHistory() {
+    const historyList = document.getElementById('historyList');
+    
+    if (!currentUser || !db) {
+        historyList.innerHTML = '<div class="history-empty">Please sign in to view your workout history.</div>';
+        return;
+    }
+    
+    historyList.innerHTML = '<div class="history-loading">Loading history...</div>';
+    
+    try {
+        const historySnapshot = await db.collection('users')
+            .doc(currentUser.uid)
+            .collection('history')
+            .orderBy('completedAt', 'desc')
+            .limit(50)
+            .get();
+        
+        if (historySnapshot.empty) {
+            historyList.innerHTML = '<div class="history-empty">No workouts completed yet. Complete a workout to see it here!</div>';
+            return;
+        }
+        
+        let html = '';
+        historySnapshot.forEach(doc => {
+            const data = doc.data();
+            const workout = WORKOUTS.find(w => w.id === data.workoutId);
+            const workoutTitle = workout ? workout.title : 'Unknown Workout';
+            
+            // Format date
+            let dateStr = 'Recently';
+            if (data.completedAt) {
+                const date = data.completedAt.toDate();
+                dateStr = date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+            }
+            
+            // Format duration
+            const mins = Math.floor(data.duration / 60);
+            const secs = data.duration % 60;
+            const durationStr = secs > 0 ? `${mins}:${secs.toString().padStart(2, '0')} min` : `${mins} min`;
+            
+            html += `
+                <div class="history-item">
+                    <div class="history-item-info">
+                        <div class="history-item-title">${workoutTitle}</div>
+                        <div class="history-item-meta">${dateStr}</div>
+                    </div>
+                    <div class="history-item-duration">${durationStr}</div>
+                </div>
+            `;
+        });
+        
+        historyList.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading workout history:', error);
+        historyList.innerHTML = '<div class="history-empty">Error loading history. Please try again.</div>';
     }
 }
 
