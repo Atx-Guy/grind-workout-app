@@ -1662,6 +1662,67 @@ function markSetupDone() {
     try { localStorage.setItem(SETUP_KEY, '1'); } catch(e) {}
 }
 
+// Workout state persistence
+const WORKOUT_STATE_KEY = 'grind_workout_state';
+
+function saveWorkoutState() {
+    try {
+        const state = {
+            selectedWorkout: selectedWorkout,
+            currentIndex: currentIndex,
+            timeLeft: timeLeft,
+            isRunning: isRunning,
+            workoutStartTime: workoutStartTime
+        };
+        localStorage.setItem(WORKOUT_STATE_KEY, JSON.stringify(state));
+    } catch(e) {
+        console.error('Error saving workout state:', e);
+    }
+}
+
+function loadWorkoutState() {
+    try {
+        const saved = localStorage.getItem(WORKOUT_STATE_KEY);
+        if (saved) {
+            const state = JSON.parse(saved);
+            return state;
+        }
+    } catch(e) {
+        console.error('Error loading workout state:', e);
+    }
+    return null;
+}
+
+function clearWorkoutState() {
+    try {
+        localStorage.removeItem(WORKOUT_STATE_KEY);
+    } catch(e) {
+        console.error('Error clearing workout state:', e);
+    }
+}
+
+function restoreWorkoutState() {
+    const state = loadWorkoutState();
+    if (!state || !state.selectedWorkout) {
+        return false;
+    }
+
+    // Restore the workout state
+    selectedWorkout = state.selectedWorkout;
+    currentIndex = state.currentIndex;
+    timeLeft = state.timeLeft;
+    workoutStartTime = state.workoutStartTime;
+    isRunning = false; // Always start paused when restoring
+
+    // Show timer screen and update display
+    showScreen('screenTimer');
+    updateTimerDisplay();
+
+    // Notify user
+    speak('Workout restored');
+    return true;
+}
+
 // ══════════════════════════════════════
 //  SETUP SCREEN
 // ══════════════════════════════════════
@@ -1872,6 +1933,7 @@ function startWorkout() {
     timeLeft = selectedWorkout.steps[0].duration;
     isRunning = false;
     workoutStartTime = Date.now();
+    saveWorkoutState();
     showScreen('screenTimer');
     updateTimerDisplay();
     togglePlay();
@@ -1938,6 +2000,7 @@ function tick() {
         advanceExercise();
     }
     updateTimerDisplay();
+    saveWorkoutState();
 }
 
 function advanceExercise() {
@@ -1956,6 +2019,7 @@ function advanceExercise() {
     } else {
         speak(next.name);
     }
+    saveWorkoutState();
 }
 
 function togglePlay() {
@@ -1970,6 +2034,7 @@ function togglePlay() {
         intervalId = setInterval(tick, 1000);
     }
     updateTimerDisplay();
+    saveWorkoutState();
 }
 
 function skipExercise() {
@@ -1980,6 +2045,7 @@ function skipExercise() {
 function stopWorkout() {
     clearInterval(intervalId);
     isRunning = false;
+    clearWorkoutState();
     showScreen('screenBrowse');
 }
 
@@ -1991,10 +2057,11 @@ function completeWorkout() {
     document.getElementById('completeStat').innerHTML =
         `<strong>${selectedWorkout.title}</strong> completed in <strong>${mins} min</strong>`;
     speak('Workout complete. Great job!');
-    
+
     // Save workout history to database
     saveWorkoutHistory(selectedWorkout.id, elapsed, new Date());
-    
+
+    clearWorkoutState();
     showScreen('screenComplete');
 }
 
@@ -2465,6 +2532,12 @@ function showLoginError(message) {
 
 // Skip login (continue without account)
 function skipLogin() {
+    // Try to restore workout first
+    const restored = restoreWorkoutState();
+    if (restored) {
+        return; // Workout was restored, stay on timer screen
+    }
+
     if (isSetupDone()) {
         renderEquipBar();
         renderFilters();
@@ -2510,7 +2583,13 @@ async function onUserLoggedIn(user) {
             console.error('Error loading user data:', error);
         }
     }
-    
+
+    // Try to restore workout first
+    const restored = restoreWorkoutState();
+    if (restored) {
+        return; // Workout was restored, stay on timer screen
+    }
+
     // Navigate to appropriate screen
     if (isSetupDone()) {
         renderEquipBar();
