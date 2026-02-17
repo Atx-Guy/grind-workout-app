@@ -1803,7 +1803,7 @@ function renderWorkoutGrid() {
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    const showBack = id !== 'screenBrowse' && id !== 'screenSetup';
+    const showBack = id !== 'screenBrowse' && id !== 'screenSetup' && id !== 'screenLogin';
     document.getElementById('backBtn').classList.toggle('visible', showBack);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
