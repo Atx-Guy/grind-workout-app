@@ -2796,12 +2796,13 @@ async function loadWorkoutHistory() {
             if (data.completedAt && typeof data.completedAt.toDate === 'function') {
                 try {
                     const date = data.completedAt.toDate();
-                    dateStr = date.toLocaleDateString('en-US', { 
+                    dateStr = date.toLocaleString('en-US', { 
                         month: 'short', 
                         day: 'numeric', 
                         year: 'numeric',
                         hour: 'numeric',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        hour12: true
                     });
                 } catch (err) {
                     console.warn('Error formatting date:', err);
