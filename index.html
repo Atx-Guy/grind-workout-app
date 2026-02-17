@@ -2793,15 +2793,20 @@ async function loadWorkoutHistory() {
             
             // Format date
             let dateStr = 'Recently';
-            if (data.completedAt) {
-                const date = data.completedAt.toDate();
-                dateStr = date.toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                });
+            if (data.completedAt && typeof data.completedAt.toDate === 'function') {
+                try {
+                    const date = data.completedAt.toDate();
+                    dateStr = date.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    });
+                } catch (err) {
+                    console.warn('Error formatting date:', err);
+                    dateStr = 'Recently';
+                }
             }
             
             // Format duration
@@ -2826,15 +2831,29 @@ async function loadWorkoutHistory() {
         
         // Check for missing index error
         if (error.code === 'failed-precondition') {
-            historyList.innerHTML = `
-                <div class="history-empty">
-                    <p>Database index required.</p>
-                    <p style="font-size: 12px; margin-top: 8px;">
-                        Click <a href="${error.message.match(/https:\/\/[^\s]+/)}" target="_blank" style="color: var(--accent);">here</a> to create the required index, 
-                        then refresh this page.
-                    </p>
-                </div>
-            `;
+            const urlMatch = error.message.match(/https:\/\/[^\s]+/);
+            const indexUrl = urlMatch ? urlMatch[0] : null;
+            
+            if (indexUrl) {
+                historyList.innerHTML = `
+                    <div class="history-empty">
+                        <p>Database index required.</p>
+                        <p style="font-size: 12px; margin-top: 8px;">
+                            Click <a href="${indexUrl}" target="_blank" style="color: var(--accent);">here</a> to create the required index, 
+                            then refresh this page.
+                        </p>
+                    </div>
+                `;
+            } else {
+                historyList.innerHTML = `
+                    <div class="history-empty">
+                        <p>Database index required.</p>
+                        <p style="font-size: 12px; margin-top: 8px;">
+                            Please check the browser console for details on how to create the required index.
+                        </p>
+                    </div>
+                `;
+            }
         } else {
             historyList.innerHTML = '<div class="history-empty">Error loading history. Please try again.</div>';
         }
