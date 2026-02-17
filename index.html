@@ -2701,11 +2701,16 @@ async function loadWorkoutHistory() {
             return;
         }
         
+        // Create a lookup map for workout titles for O(1) access
+        const workoutMap = {};
+        WORKOUTS.forEach(w => {
+            workoutMap[w.id] = w.title;
+        });
+        
         let html = '';
         historySnapshot.forEach(doc => {
             const data = doc.data();
-            const workout = WORKOUTS.find(w => w.id === data.workoutId);
-            const workoutTitle = workout ? workout.title : 'Unknown Workout';
+            const workoutTitle = workoutMap[data.workoutId] || 'Unknown Workout';
             
             // Format date
             let dateStr = 'Recently';
@@ -2739,7 +2744,21 @@ async function loadWorkoutHistory() {
         historyList.innerHTML = html;
     } catch (error) {
         console.error('Error loading workout history:', error);
-        historyList.innerHTML = '<div class="history-empty">Error loading history. Please try again.</div>';
+        
+        // Check for missing index error
+        if (error.code === 'failed-precondition') {
+            historyList.innerHTML = `
+                <div class="history-empty">
+                    <p>Database index required.</p>
+                    <p style="font-size: 12px; margin-top: 8px;">
+                        Click <a href="${error.message.match(/https:\/\/[^\s]+/)}" target="_blank" style="color: var(--accent);">here</a> to create the required index, 
+                        then refresh this page.
+                    </p>
+                </div>
+            `;
+        } else {
+            historyList.innerHTML = '<div class="history-empty">Error loading history. Please try again.</div>';
+        }
     }
 }
 
