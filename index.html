@@ -2722,6 +2722,15 @@ async function handleLogout() {
 async function saveUserEquipment() {
     if (currentUser && db) {
         try {
+            // Refresh auth token before write operation to prevent permission errors
+            if (auth && currentUser) {
+                try {
+                    await currentUser.getIdToken(true);
+                } catch (tokenError) {
+                    console.warn('Token refresh failed before save, continuing:', tokenError);
+                }
+            }
+            
             await db.collection('users').doc(currentUser.uid).set({
                 equipment: [...myEquipment],
                 setupDone: isSetupDone(),
@@ -2737,6 +2746,15 @@ async function saveUserEquipment() {
 async function saveWorkoutHistory(workoutId, duration, completedAt) {
     if (currentUser && db) {
         try {
+            // Refresh auth token before write operation to prevent permission errors
+            if (auth && currentUser) {
+                try {
+                    await currentUser.getIdToken(true);
+                } catch (tokenError) {
+                    console.warn('Token refresh failed before save, continuing:', tokenError);
+                }
+            }
+            
             await db.collection('users').doc(currentUser.uid).collection('history').add({
                 workoutId: workoutId,
                 duration: duration,
