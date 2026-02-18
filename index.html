@@ -2722,6 +2722,15 @@ async function handleLogout() {
 async function saveUserEquipment() {
     if (currentUser && db) {
         try {
+            // Refresh auth token before write operation to prevent permission errors
+            if (auth && currentUser) {
+                try {
+                    await currentUser.getIdToken(true);
+                } catch (tokenError) {
+                    console.warn('Token refresh failed before save, continuing:', tokenError);
+                }
+            }
+            
             await db.collection('users').doc(currentUser.uid).set({
                 equipment: [...myEquipment],
                 setupDone: isSetupDone(),
@@ -2737,6 +2746,15 @@ async function saveUserEquipment() {
 async function saveWorkoutHistory(workoutId, duration, completedAt) {
     if (currentUser && db) {
         try {
+            // Refresh auth token before write operation to prevent permission errors
+            if (auth && currentUser) {
+                try {
+                    await currentUser.getIdToken(true);
+                } catch (tokenError) {
+                    console.warn('Token refresh failed before save, continuing:', tokenError);
+                }
+            }
+            
             await db.collection('users').doc(currentUser.uid).collection('history').add({
                 workoutId: workoutId,
                 duration: duration,
@@ -2757,7 +2775,7 @@ async function openHistory() {
 }
 
 // Load and display workout history
-async function loadWorkoutHistory() {
+async function loadWorkoutHistory(retryCount = 0) {
     const historyList = document.getElementById('historyList');
 
     // Validate user and database availability
@@ -2776,6 +2794,16 @@ async function loadWorkoutHistory() {
     historyList.innerHTML = '<div class="history-loading">Loading history...</div>';
 
     try {
+        // Refresh auth token before making the request to ensure it's valid
+        if (retryCount === 0 && auth && currentUser) {
+            try {
+                await currentUser.getIdToken(true); // Force token refresh
+                console.log('Auth token refreshed successfully');
+            } catch (tokenError) {
+                console.warn('Token refresh failed, continuing with existing token:', tokenError);
+            }
+        }
+
         const historySnapshot = await db.collection('users')
             .doc(currentUser.uid)
             .collection('history')
@@ -2862,12 +2890,25 @@ async function loadWorkoutHistory() {
                 historyList.innerHTML = '<div class="history-empty">Database configuration error. Please contact support.</div>';
             }
         } else if (error.code === 'permission-denied') {
-            // Firestore security rules deny access
+            // Permission denied - could be expired token, try to refresh and retry once
+            if (retryCount === 0 && auth && currentUser) {
+                console.log('Permission denied, attempting to refresh auth token and retry...');
+                try {
+                    await currentUser.getIdToken(true); // Force refresh token
+                    console.log('Token refreshed, retrying loadWorkoutHistory...');
+                    // Retry loading history with fresh token
+                    return await loadWorkoutHistory(1); // Pass retry count to prevent infinite loop
+                } catch (refreshError) {
+                    console.error('Token refresh failed:', refreshError);
+                }
+            }
+            
+            // Firestore security rules deny access - either retry failed or this is already a retry
             historyList.innerHTML = `
                 <div class="history-empty">
                     <p>Access denied.</p>
                     <p style="font-size: 12px; margin-top: 8px;">
-                        You don't have permission to access workout history. Please sign out and sign in again.
+                        Your session may have expired. Please sign out and sign in again.
                     </p>
                 </div>
             `;
