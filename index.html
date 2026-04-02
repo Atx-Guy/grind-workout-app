@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GRIND — Home Workout Engine</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        window.CLERK_PUBLISHABLE_KEY = 'pk_test_placeholder';
+    </script>
     <style>
         :root {
             --bg-dark: #0a0a0f;
@@ -1009,6 +1012,100 @@
             color: var(--accent);
         }
 
+        /* ── Gateway Pairing ── */
+        .gateway-screen {
+            padding: 20px 0;
+        }
+        .gateway-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .gateway-header h2 {
+            font-size: 24px;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .gateway-header p {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+        .gateway-code-section {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .gateway-code-section label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+        .gateway-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text);
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+        .gateway-pair-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .gateway-list {
+            margin-top: 24px;
+        }
+        .gateway-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .gateway-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .gateway-id {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .gateway-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        .gateway-status.connected { background: var(--green); color: white; }
+        .gateway-status.disconnected { background: var(--text-muted); color: var(--text-dim); }
+        .gateway-unpair-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .gateway-empty, .gateway-loading, .gateway-error {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-dim);
+        }
+
         /* ── Mobile ── */
         @media (max-width: 480px) {
             .app-shell { padding: 12px 12px 100px; }
@@ -1048,7 +1145,7 @@
                 <div id="loginError" class="login-error" style="display: none;"></div>
                 
                 <div class="login-toggle">
-                    <a onclick="skipLogin()">Continue without account →</a>
+                    <a onclick="handleDemoMode()">Try Demo Mode →</a>
                 </div>
             </div>
         </div>
@@ -1170,6 +1267,13 @@
             <div class="history-loading">Loading history...</div>
         </div>
     </div>
+
+    <!-- ════════ GATEWAY PAIRING SCREEN ════════ -->
+    <div class="screen" id="screenGateway">
+        <div class="gateway-screen">
+            <div id="gatewayContainer"></div>
+        </div>
+    </div>
 </div>
 
 <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle voice cues">🔊</button>
@@ -1179,7 +1283,10 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-<script>
+<!-- Clerk SDK -->
+<script src="https://unpkg.com/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+
+<script type="module">
 // ══════════════════════════════════════
 //  EXERCISE DATABASE
 // ══════════════════════════════════════
@@ -2944,28 +3051,294 @@ async function loadWorkoutHistory(retryCount = 0) {
 }
 
 // ══════════════════════════════════════
+//  CLERK AUTHENTICATION
+// ══════════════════════════════════════
+let clerk = null;
+let authToken = null;
+
+async function initClerkAuth() {
+    const CLERK_KEY = window.CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder';
+    
+    if (!Clerk || CLERK_KEY === 'pk_test_placeholder') {
+        console.warn('Clerk not configured. Running in demo mode.');
+        return { demo: true };
+    }
+    
+    clerk = Clerk;
+    await clerk.load();
+    
+    if (clerk.user) {
+        authToken = await clerk.session.getToken();
+        return {
+            user: {
+                id: clerk.user.id,
+                email: clerk.user.primaryEmailAddress?.emailAddress,
+                firstName: clerk.user.firstName
+            }
+        };
+    }
+    return { user: null };
+}
+
+function setAuthToken(token) {
+    authToken = token;
+}
+
+function getAuthToken() {
+    return authToken;
+}
+
+window.handleLogin = async function() {
+    if (!clerk) {
+        handleDemoMode();
+        return;
+    }
+    clerk.openSignIn({
+        routing: 'hash',
+        afterSignIn: async () => {
+            authToken = await clerk.session.getToken();
+            window.dispatchEvent(new CustomEvent('clerk:authenticated', {
+                detail: { id: clerk.user.id, email: clerk.user.primaryEmailAddress?.emailAddress }
+            }));
+        }
+    });
+};
+
+window.handleSignup = async function() {
+    if (!clerk) {
+        handleDemoMode();
+        return;
+    }
+    clerk.openSignUp({
+        routing: 'hash',
+        afterSignUp: async () => {
+            authToken = await clerk.session.getToken();
+            window.dispatchEvent(new CustomEvent('clerk:authenticated', {
+                detail: { id: clerk.user.id, email: clerk.user.primaryEmailAddress?.emailAddress }
+            }));
+        }
+    });
+};
+
+window.handleDemoMode = function() {
+    const demoEmail = 'demo@grind.app';
+    localStorage.setItem('demo_email', demoEmail);
+    showScreen('screenSetup');
+};
+
+window.handleSignOut = async function() {
+    if (clerk) await clerk.signOut();
+    localStorage.removeItem('demo_email');
+    authToken = null;
+    showScreen('screenLogin');
+};
+
+// ══════════════════════════════════════
+//  API CALLS WITH AUTH
+// ══════════════════════════════════════
+async function apiCall(endpoint, method = 'GET', data = null) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    
+    const response = await fetch(`/api${endpoint}`, {
+        method,
+        headers,
+        body: data ? JSON.stringify(data) : null
+    });
+    
+    if (response.status === 401) {
+        throw new Error('unauthenticated');
+    }
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Request failed');
+    }
+    return response.json();
+}
+
+async function loadHistory() {
+    if (!authToken) return;
+    
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+    
+    historyList.innerHTML = '<div class="history-loading">Loading history...</div>';
+    
+    try {
+        const userId = clerk?.user?.id;
+        if (!userId) return;
+        
+        const data = await apiCall(`/users/${userId}/history`);
+        renderHistory(data.history || []);
+        
+        // Sync to backend
+        if (data.history?.length > 0) {
+            await apiCall(`/users/${userId}/history/sync`, 'POST', { history: data.history });
+        }
+    } catch (error) {
+        console.error('History error:', error);
+        historyList.innerHTML = `<div class="history-empty"><p>Error loading history.</p></div>`;
+    }
+}
+
+function renderHistory(history) {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+    
+    if (!history.length) {
+        historyList.innerHTML = '<div class="history-empty"><p>No workouts completed yet.</p></div>';
+        return;
+    }
+    
+    historyList.innerHTML = history.map(item => {
+        const date = new Date(item.date).toLocaleDateString();
+        return `<div class="history-item">
+            <div class="history-date">${date}</div>
+            <div class="history-title">${item.title || 'Workout'}</div>
+        </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════
+//  GATEWAY PAIRING
+// ══════════════════════════════════════
+window.openGatewayPairing = function() {
+    showScreen('screenGateway');
+    const container = document.getElementById('gatewayContainer');
+    if (!container) return;
+    
+    if (!authToken) {
+        container.innerHTML = '<div class="gateway-error">Please sign in first.</div>';
+        return;
+    }
+    
+    const userId = clerk?.user?.id;
+    if (!userId) return;
+    
+    container.innerHTML = `
+        <div class="gateway-header">
+            <h2>Gateway Pairing</h2>
+            <p>Connect your workout sensors</p>
+        </div>
+        <div class="gateway-code-section">
+            <input type="text" id="gatewayCodeInput" placeholder="Enter gateway code" class="gateway-input" />
+            <button onclick="window.pairGateway('${userId}')" class="gateway-pair-btn">Pair</button>
+        </div>
+        <div class="gateway-list" id="gatewayList"></div>
+    `;
+    
+    loadGateways(userId);
+};
+
+async function loadGateways(userId) {
+    const list = document.getElementById('gatewayList');
+    if (!list) return;
+    
+    try {
+        const data = await apiCall(`/users/${userId}/gateways`);
+        renderGateways(data.gateways || []);
+    } catch (error) {
+        list.innerHTML = '<div class="gateway-error">Failed to load gateways.</div>';
+    }
+}
+
+function renderGateways(gateways) {
+    const list = document.getElementById('gatewayList');
+    if (!list) return;
+    
+    if (!gateways.length) {
+        list.innerHTML = '<div class="gateway-empty">No gateways paired.</div>';
+        return;
+    }
+    
+    const userId = clerk?.user?.id;
+    list.innerHTML = gateways.map(gw => `
+        <div class="gateway-item">
+            <div>
+                <div class="gateway-name">${gw.name || 'Gateway'}</div>
+                <div class="gateway-status ${gw.connected ? 'connected' : 'disconnected'}">${gw.connected ? 'Connected' : 'Disconnected'}</div>
+            </div>
+            <button onclick="window.unpairGateway('${userId}', '${gw.id}')" class="gateway-unpair-btn">Unpair</button>
+        </div>
+    `).join('');
+}
+
+window.pairGateway = async function(userId) {
+    const code = document.getElementById('gatewayCodeInput')?.value.trim();
+    if (!code) return;
+    
+    try {
+        await apiCall(`/users/${userId}/gateways`, 'POST', { code });
+        document.getElementById('gatewayCodeInput').value = '';
+        loadGateways(userId);
+    } catch (error) {
+        alert('Pairing failed: ' + error.message);
+    }
+};
+
+window.unpairGateway = async function(userId, gatewayId) {
+    if (!confirm('Unpair this gateway?')) return;
+    try {
+        await apiCall(`/users/${userId}/gateways/${gatewayId}`, 'DELETE');
+        loadGateways(userId);
+    } catch (error) {
+        alert('Unpair failed: ' + error.message);
+    }
+};
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+window.showScreen = function(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if (target) {
+        target.classList.add('active');
+        if (screenId === 'screenHistory') loadHistory();
+    }
+};
+
+window.goBack = function() {
+    const prev = { 'screenDetail': 'screenBrowse', 'screenHistory': 'screenBrowse', 'screenGateway': 'screenSetup' };
+    showScreen(prev[currentScreen] || 'screenBrowse');
+};
+
+// ══════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════
-loadEquipment();
+async function initApp() {
+    loadEquipment();
+    
+    const result = await initClerkAuth();
+    
+    if (result.demo) {
+        const savedEmail = localStorage.getItem('demo_email');
+        if (savedEmail) showScreen('screenSetup');
+        else showScreen('screenLogin');
+        return;
+    }
+    
+    if (result.user) {
+        showScreen('screenSetup');
+    } else {
+        showScreen('screenLogin');
+    }
+    
+    window.addEventListener('clerk:authenticated', () => showScreen('screenSetup'));
+}
 
-// Enter key for AI generator
-document.getElementById('genInput').addEventListener('keydown', (e) => {
+document.getElementById('genInput')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         generateWorkout();
     }
 });
 
-// Enter key for login form
-document.getElementById('loginPassword').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        handleLogin();
-    }
+document.getElementById('loginPassword')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLogin();
 });
 
-// Initialize Firebase after DOM is ready (Firebase SDK is already loaded)
-initFirebase();
+initApp();
 </script>
 
 </body>
