@@ -3,9 +3,19 @@
 firebase-debug.log
 firebase-debug.*.log
 
-# Node modules (if using Firebase tools locally)
+# Node modules
 node_modules/
+
+# Environment
+.env
+.env.local
+
+# Build
+dist/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
